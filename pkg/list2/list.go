@@ -6,6 +6,7 @@ type Item struct {
 	code, title, desc string
 }
 
+func (i Item) Code() string        { return i.code }
 func (i Item) Title() string       { return i.title }
 func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title + i.desc }
@@ -98,19 +99,9 @@ func NewListItemTypeOfChange() []list.Item {
 func NewListItemScopeOfChange() []list.Item {
 	return []list.Item{
 		Item{
-			code:  "domain",
-			title: "Domain",
-			desc:  "...",
-		},
-		Item{
-			code:  "provider",
-			title: "Provider",
-			desc:  "...",
-		},
-		Item{
-			code:  "handler",
-			title: "Handler",
-			desc:  "...",
+			code:  "code",
+			title: "Code",
+			desc:  "Dummy scope about code",
 		},
 	}
 }
