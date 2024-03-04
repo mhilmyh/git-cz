@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -16,11 +17,18 @@ var selectionStyle = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder()).
 	PaddingTop(1)
 var titleLineStyle = lipgloss.NewStyle().
+	Background(lipgloss.Color("62")).
+	Foreground(lipgloss.Color("230")).
+	Padding(0, 1)
+var grayLineStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.AdaptiveColor{Light: "#A49FA5", Dark: "#777777"})
 var textInputStyle = lipgloss.NewStyle().
 	Border(lipgloss.RoundedBorder()).
 	PaddingLeft(2).
-	PaddingRight(2)
+	PaddingRight(2).
+	PaddingTop(1).
+	PaddingBottom(2)
+
 var state = 0
 
 type Model struct {
@@ -30,6 +38,7 @@ type Model struct {
 	SelectedScopeOfChange list2.Item
 	TitleCommitInput      textinput.Model
 	WrittenTitleCommit    string
+	FinalPromptInput      textinput.Model
 }
 
 func (m Model) Init() tea.Cmd {
@@ -59,6 +68,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			state += 1
 			if state == 1 {
 				m.ScopeOfChangeList.SetSize(m.TypeOfChangeList.Width(), m.TypeOfChangeList.Height())
+			} else if state == 2 {
+				m.TitleCommitInput.Width = 64
 			} else if state == 4 {
 				cmd := exec.Command("git", "commit", "-m", m.FullCommitMessage())
 				if cmd != nil {
@@ -74,6 +85,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.TypeOfChangeList.SetSize(msg.Width-h, msg.Height-v)
 		} else if state == 1 {
 			m.ScopeOfChangeList.SetSize(msg.Width-h, msg.Height-v)
+		} else if state == 2 {
+			m.TitleCommitInput.Width = min(64, max(16, msg.Width*50/100))
 		}
 	}
 
@@ -95,13 +108,16 @@ func (m Model) View() string {
 	} else if state == 1 {
 		return selectionStyle.Render(m.ScopeOfChangeList.View())
 	} else if state == 2 {
-		return textInputStyle.Render(m.TitleCommitInput.View())
+		renderedTitle := titleLineStyle.Render("Title of commit " + strconv.FormatInt(int64(m.TitleCommitInput.Width), 10))
+		titleCommitInput := m.TitleCommitInput.View()
+		return textInputStyle.Render(renderedTitle + "\n\n" + titleCommitInput)
 	} else if state == 3 {
-		s := fmt.Sprintf("Type of change \t:\t%s\n", m.SelectedTypeOfChange.Title())
-		s += fmt.Sprintf("Scope of change\t:\t%s\n", m.SelectedScopeOfChange.Title())
-		s += fmt.Sprintf("Title of commit\t:\t%s\n", m.WrittenTitleCommit)
-		s += titleLineStyle.Render(m.FullCommitMessage())
-		s += "\n\nDo you want to commit? (press enter to continue)"
+		s := fmt.Sprintf("Type of change  : %s\n", m.SelectedTypeOfChange.Title())
+		s += fmt.Sprintf("Scope of change : %s\n", m.SelectedScopeOfChange.Title())
+		s += fmt.Sprintf("Title of commit : %s\n", m.WrittenTitleCommit)
+		s += grayLineStyle.Render(m.FullCommitMessage())
+		s += "\n\nDo you want to commit? "
+		s += m.FinalPromptInput.View()
 		return textInputStyle.Render(s)
 	}
 	return "..."

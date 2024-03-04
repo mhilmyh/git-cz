@@ -16,12 +16,14 @@ func main() {
 		TypeOfChangeList:  list.New(list2.NewListItemTypeOfChange(), list.NewDefaultDelegate(), 0, 0),
 		ScopeOfChangeList: list.New(list2.NewListItemScopeOfChange(), list.NewDefaultDelegate(), 0, 0),
 		TitleCommitInput:  textinput.New(),
+		FinalPromptInput:  textinput.New(),
 	}
 	m.TypeOfChangeList.Title = "Type of change"
 	m.ScopeOfChangeList.Title = "Scope of change"
-	m.TitleCommitInput.Placeholder = "Title of commit"
+	m.TitleCommitInput.Placeholder = "add, update or remove ..."
 	m.TitleCommitInput.Focus()
-	m.TitleCommitInput.CharLimit = 156
+	m.TitleCommitInput.CharLimit = 256
+	m.FinalPromptInput.Focus()
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
 
