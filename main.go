@@ -62,6 +62,7 @@ func main() {
 		pterm.Info.Println("Fail to load config file: " + err.Error())
 		os.Exit(1)
 	}
+	defer saveConfig(conf)
 
 	chosenType, err := chooseType(conf.Types)
 	if err != nil {
@@ -82,7 +83,10 @@ func main() {
 	}
 
 	msg := buildCommitMessage(chosenType, chosenScope, title)
-	executeCommit(msg)
+	if err := executeCommit(msg); err != nil {
+		pterm.Info.Println("Fail to commit: " + err.Error())
+		os.Exit(1)
+	}
 }
 
 func loadConfigFile() (*Config, error) {
@@ -107,6 +111,17 @@ func loadConfigFile() (*Config, error) {
 		c.Scopes = defaultScopes()
 	}
 	return c, nil
+}
+
+func saveConfig(c *Config) {
+	b, err := json.Marshal(c)
+	if err != nil {
+		pterm.Error.Println("Cannot convert config to json: " + err.Error())
+	}
+	err = os.WriteFile(configPath, b, os.ModePerm)
+	if err != nil {
+		pterm.Error.Println("Cannot save config: " + err.Error())
+	}
 }
 
 func createConfigFile(path string) error {
@@ -148,7 +163,7 @@ func chooseType(listOfType ListOfItem) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	split := strings.SplitN(selected, ":", 1)
+	split := strings.SplitN(selected, ":", 2)
 	if len(split) == 0 {
 		return "", fmt.Errorf("error selected scope of change is empty")
 	}
@@ -162,7 +177,7 @@ func chooseScope(listOfScope ListOfItem) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	split := strings.SplitN(selected, ":", 1)
+	split := strings.SplitN(selected, ":", 2)
 	if len(split) == 0 {
 		return "", fmt.Errorf("error selected scope of change is empty")
 	}
@@ -174,11 +189,16 @@ func writeTitle() (string, error) {
 }
 
 func buildCommitMessage(chosenType, chosenScope, title string) string {
-	return chosenType + "(" + chosenScope + "):" + title
+	return fmt.Sprintf("%s(%s): %s", chosenType, chosenScope, title)
 }
 
-func executeCommit(msg string) {
-	exec.Command("git", "commit", "-m", msg)
+func executeCommit(msg string) error {
+	cmd := exec.Command("git", "commit", "-m", msg)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	pterm.Info.Println(msg)
+	return nil
 }
 
 func defaultTypes() []Item {
