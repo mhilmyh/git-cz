@@ -109,34 +109,46 @@ func loadConfigFile() (*Config, error) {
 
 	json.Unmarshal([]byte(str), &c)
 
-	if len(c.Types) == 0 {
-		c.Types = defaultTypes()
-	} else {
-		types := make([]Item, 0)
-		copy(types, c.Types)
+	var corruptedTypes, corruptedScopes int
+	c.Types, corruptedTypes = validateListOfItems(c.Types, defaultTypes())
+	c.Scopes, corruptedScopes = validateListOfItems(c.Scopes, defaultScopes())
 
-		c.Types = nil
+	if corruptedTypes > 0 || corruptedScopes > 0 {
+		if corruptedTypes > 0 {
+			pterm.Warning.Println("invalid configuration `commit type` empty items.code detected")
+
+		}
+		if corruptedScopes > 0 {
+			pterm.Warning.Println("invalid configuration `scope of change` empty items.code detected")
+
+		}
+		pterm.Warning.Println("you can remove your configuration file to reset the config state")
+		pterm.Warning.Println("config path: " + configPath)
+	}
+
+	return c, nil
+}
+
+func validateListOfItems(list ListOfItem, defaultList ListOfItem) (ListOfItem, int) {
+	corruptedData := 0
+
+	if len(list) == 0 {
+		return defaultList, corruptedData
+	} else {
+		types := make([]Item, len(list))
+		copy(types, list)
+
+		list = nil
 		for i := range types {
 			if types[i].Code != "" {
-				c.Types = append(c.Types, types[i])
+				list = append(list, types[i])
+			} else {
+				corruptedData += 1
 			}
 		}
 	}
 
-	if len(c.Scopes) == 0 {
-		c.Scopes = defaultScopes()
-	} else {
-		scopes := make([]Item, 0)
-		copy(scopes, c.Types)
-
-		c.Scopes = nil
-		for i := range scopes {
-			if scopes[i].Code != "" {
-				c.Scopes = append(c.Types, scopes[i])
-			}
-		}
-	}
-	return c, nil
+	return list, corruptedData
 }
 
 func saveConfig(c *Config) {
@@ -191,7 +203,7 @@ func chooseType(listOfType ListOfItem) (string, error) {
 	}
 	split := strings.SplitN(selected, ":", 2)
 	if len(split) == 0 {
-		return "", fmt.Errorf("error selected scope of change is empty")
+		return "", fmt.Errorf("error selected commit type is empty")
 	}
 	return strings.Trim(split[0], " "), nil
 }
