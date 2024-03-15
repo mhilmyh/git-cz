@@ -49,14 +49,22 @@ type Config struct {
 }
 
 var configPath string
+var verbosity bool
 
 func init() {
 	u, _ := user.Current()
 	flag.StringVar(&configPath, "c", filepath.Join(u.HomeDir, ".gitcz/config.json"), "configuration file path")
+	flag.BoolVar(&verbosity, "vb", false, "verbosity option")
 	flag.Parse()
 }
 
 func main() {
+	if verbosity {
+		wd, _ := os.Getwd()
+		pterm.Info.Printfln("configuration path: " + configPath)
+		pterm.Info.Printfln("current working directory: " + wd)
+	}
+
 	if err := checkStageFile(); err != nil {
 		pterm.Info.Println("No staged file: " + err.Error())
 		os.Exit(1)
@@ -115,11 +123,11 @@ func loadConfigFile() (*Config, error) {
 
 	if corruptedTypes > 0 || corruptedScopes > 0 {
 		if corruptedTypes > 0 {
-			pterm.Warning.Println("invalid configuration `commit type` empty items.code detected")
+			pterm.Warning.Println("invalid configuration `commit type` empty code detected")
 
 		}
 		if corruptedScopes > 0 {
-			pterm.Warning.Println("invalid configuration `scope of change` empty items.code detected")
+			pterm.Warning.Println("invalid configuration `scope of change` empty code detected")
 
 		}
 		pterm.Warning.Println("you can remove your configuration file to reset the config state")
