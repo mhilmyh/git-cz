@@ -14,8 +14,8 @@ import (
 )
 
 type Item struct {
-	code string
-	desc string
+	Code string `json:"code" yaml:"code"`
+	Desc string `json:"desc" yaml:"desc"`
 }
 
 type ListOfItem []Item
@@ -23,9 +23,14 @@ type ListOfItem []Item
 func (l *ListOfItem) ToSliceString() []string {
 	result := make([]string, len(*l))
 	for i := range *l {
-		code := (*l)[i].code
-		desc := l.cutStr((*l)[i].desc)
-		result[i] = code + ": " + desc
+		code := (*l)[i].Code
+		desc := l.cutStr((*l)[i].Desc)
+
+		if code != "" && desc != "" {
+			result[i] = code + ": " + desc
+		} else if code != "" {
+			result[i] = code
+		}
 	}
 	return result
 }
@@ -106,9 +111,30 @@ func loadConfigFile() (*Config, error) {
 
 	if len(c.Types) == 0 {
 		c.Types = defaultTypes()
+	} else {
+		types := make([]Item, 0)
+		copy(types, c.Types)
+
+		c.Types = nil
+		for i := range types {
+			if types[i].Code != "" {
+				c.Types = append(c.Types, types[i])
+			}
+		}
 	}
+
 	if len(c.Scopes) == 0 {
 		c.Scopes = defaultScopes()
+	} else {
+		scopes := make([]Item, 0)
+		copy(scopes, c.Types)
+
+		c.Scopes = nil
+		for i := range scopes {
+			if scopes[i].Code != "" {
+				c.Scopes = append(c.Types, scopes[i])
+			}
+		}
 	}
 	return c, nil
 }
@@ -204,68 +230,68 @@ func executeCommit(msg string) error {
 func defaultTypes() []Item {
 	return []Item{
 		{
-			code: "feat",
-			desc: "introduce new functionality.",
+			Code: "feat",
+			Desc: "introduce new functionality.",
 		},
 		{
-			code: "fix",
-			desc: "address and resolve issues or bugs.",
+			Code: "fix",
+			Desc: "address and resolve issues or bugs.",
 		},
 		{
-			code: "refac",
-			desc: "improve or organize code structure without changing the behavior.",
+			Code: "refac",
+			Desc: "improve or organize code structure without changing the behavior.",
 		},
 		{
-			code: "docs",
-			desc: "update documentation or comments within the code itself.",
+			Code: "docs",
+			Desc: "update documentation or comments within the code itself.",
 		},
 		{
-			code: "clean",
-			desc: "remove unused code or redundant code.",
+			Code: "clean",
+			Desc: "remove unused code or redundant code.",
 		},
 		{
-			code: "deps",
-			desc: "update dependencies ensuring compatibility.",
+			Code: "deps",
+			Desc: "update dependencies ensuring compatibility.",
 		},
 		{
-			code: "config",
-			desc: "modify config, such as scripts, environment, or CI/CD.",
+			Code: "config",
+			Desc: "modify config, such as scripts, environment, or CI/CD.",
 		},
 		{
-			code: "opt",
-			desc: "optimize code or algorithms for better performance or efficiency.",
+			Code: "opt",
+			Desc: "optimize code or algorithms for better performance or efficiency.",
 		},
 		{
-			code: "style",
-			desc: "update code style, such as guidelines, indentation, naming conventions, or formatting.",
+			Code: "style",
+			Desc: "update code style, such as guidelines, indentation, naming conventions, or formatting.",
 		},
 		{
-			code: "local",
-			desc: "add or update localization files.",
+			Code: "local",
+			Desc: "add or update localization files.",
 		},
 		{
-			code: "test",
-			desc: "add, update, or fix tests to ensure code quality and functionality.",
+			Code: "test",
+			Desc: "add, update, or fix tests to ensure code quality and functionality.",
 		},
 		{
-			code: "revert",
-			desc: "undo previous commit changes.",
+			Code: "revert",
+			Desc: "undo previous commit changes.",
 		},
 		{
-			code: "merge",
-			desc: "merge changes from one branch into another.",
+			Code: "merge",
+			Desc: "merge changes from one branch into another.",
 		},
 		{
-			code: "sec",
-			desc: "address security vulnerabilities or weaknesses.",
+			Code: "sec",
+			Desc: "address security vulnerabilities or weaknesses.",
 		},
 		{
-			code: "setup",
-			desc: "setup the initial project structure, development tools or environment.",
+			Code: "setup",
+			Desc: "setup the initial project structure, development tools or environment.",
 		},
 		{
-			code: "debug",
-			desc: "commits for troubleshooting issues.",
+			Code: "debug",
+			Desc: "commits for troubleshooting issues.",
 		},
 	}
 }
@@ -273,24 +299,24 @@ func defaultTypes() []Item {
 func defaultScopes() []Item {
 	return []Item{
 		{
-			code: "environment",
-			desc: "changes to project settings, config, or dependencies, updates to local, staging, or production, as well as changes to env variables or config files.",
+			Code: "environment",
+			Desc: "changes to project settings, config, or dependencies, updates to local, staging, or production, as well as changes to env variables or config files.",
 		},
 		{
-			code: "file",
-			desc: "involve modifications to individual files within the codebase, such as adding, editing, or deleting files.",
+			Code: "file",
+			Desc: "involve modifications to individual files within the codebase, such as adding, editing, or deleting files.",
 		},
 		{
-			code: "directory",
-			desc: "changes to entire directories or folders within the project structure, including additions, modifications, or removals of directories and their contents.",
+			Code: "directory",
+			Desc: "changes to entire directories or folders within the project structure, including additions, modifications, or removals of directories and their contents.",
 		},
 		{
-			code: "database",
-			desc: "involve changes to the database schema, migrations, queries, or configurations, including additions, modifications, or removals of database tables, columns, indexes, or constraints.",
+			Code: "database",
+			Desc: "involve changes to the database schema, migrations, queries, or configurations, including additions, modifications, or removals of database tables, columns, indexes, or constraints.",
 		},
 		{
-			code: "server",
-			desc: "changes to server configurations, settings, or infrastructure, including updates to server configurations, deployments, server-side scripts, or server-related dependencies.",
+			Code: "server",
+			Desc: "changes to server configurations, settings, or infrastructure, including updates to server configurations, deployments, server-side scripts, or server-related dependencies.",
 		},
 	}
 }
