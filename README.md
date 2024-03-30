@@ -13,11 +13,8 @@ This repository contains a git cz written in GoLang.
 
 # Introduction
 
-This ToDo task manager is a lightweight solution for managing your tasks. It provides basic functionalities to add, delete, and mark tasks as completed.
+TODO
 
 # Features
 
-- Add tasks with descriptions
-- Mark tasks as completed
-- Delete tasks
-- List all tasks
+- TODO
